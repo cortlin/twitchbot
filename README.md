@@ -10,7 +10,7 @@ Twitchbot assignment for Method.dev using GoLang
 ![Terminal](screenshots/terminal.png)
 
 **Twitch Chat**
-![Twitchchat](screenshots/twitch.png | width=100)
+![Twitchchat](screenshots/twitch.png)
 
 ## Overview
 
