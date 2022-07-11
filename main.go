@@ -5,11 +5,12 @@ package main
 	2.[x] Send the PASS and NICK to authentica the bot user
 	3.[x] Join a specific chat room, in this case okayotter
 	4.[x] once connected, read the chat and log the results to the terminal
-	5.[ ] Parse the results for commands so we can send a response to a specific command
-	6.[ ] Reply to PING from the server with PONG to keep the connection alive
-	6.[x] create a fuction to call the ChuckNorris API
-	7.[ ] store the result, and send it back to the twitch channel
-	8.[ ] error handling all along the way
+	5.[x] Parse the results for commands so we can send a response to a specific command
+	6.[x] Reply to PING from the server with PONG to keep the connection alive
+	7.[x] create a fuction to call the ChuckNorris API
+	8.[x] store the result, and send it back to the twitch channel
+	9.[x] add a timeout to prevent our loop from hitting the twitch rate limits
+	10.[x] error handling all along the way
 */
 
 import (
@@ -21,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"net/textproto"
+	"strings"
 	"time"
 )
 
@@ -36,7 +38,7 @@ type chatConnection struct {
 func main() {
 	channel := "okayotter"
     username := "okayotterbot"
-    //The auth key ideally should be stored in an env or config file
+    //TODO: The auth key ideally should be stored in an env or config file
     oauth := "oauth: removed"
 	chat := connectToTwitch(username, oauth)
 	chat.joinChannel(channel)
@@ -51,6 +53,30 @@ func main() {
         }
         //Print all of the messages received from twitch to the console
         fmt.Printf("[%s] %s\r\n", time.Now().Format(time.UnixDate), response)
+		
+		//Responde with PONG to the server to keep the connection alive
+        if response == "PING :tmi.twitch.tv" {
+            chat.sendMessage("PONG :tmi.twitch.tv")
+
+			//line below will make it show up in the twitch chat for testing
+            //chat.say("okayotter", "PONG :tmi.twitch.tv")
+        }
+
+        //Send a Chuck Norris joke to the chat if a user types !ChuckNorris
+        if strings.Contains(response, "!chucknorris") {
+            chat.talk(channel, getJoke().Value)
+        }
+
+        //Extra Credit: Disconnect the Bot from the channel
+        //TODO: Only allow the owner of the channel to use this command.
+        if strings.Contains(response, "!disconnect") {
+            chat.talk(channel, "Shutting down the bot")
+            chat.disconnect()
+        }
+
+        // Prevents the connection for hitting the twitch limit rates
+		// 20 messages every 30 seconds, about .66 seconds
+        time.Sleep(700 * time.Millisecond)
 	}
 }
 
@@ -101,4 +127,16 @@ func (irc *chatConnection) joinChannel(channel string) {
 	//Send the JOIN message to the Twitch IRC service to join the server
     irc.sendMessage("JOIN #" + channel)
     fmt.Printf("[%s] joined channel %s\n", time.Now().Format(time.UnixDate), channel)
+}
+
+//Say a message in the twitch Channel
+func (i *chatConnection) talk(channel, msg string) {
+    fmt.Printf("[%s] sending #%s : %s\n", time.Now().Format(time.UnixDate), channel, msg)
+    i.sendMessage(fmt.Sprintf("PRIVMSG #%s :%s", channel, msg))
+}
+
+//Disconnnect the twitchBot
+func (i *chatConnection) disconnect() {
+    i.connection.Close()
+    fmt.Printf("[%s] disconnected the bot from twitch", time.Now().Format(time.UnixDate))
 }
