@@ -4,6 +4,15 @@ Twitchbot assignment for Method.dev using GoLang
 
 # Method Dev Assignment - Twitch Bot
 
+## Screenshots
+
+**Terminal**
+![Terminal](./screenshots/terminal.png)
+
+**Twitch Chat**
+
+<img src="screenshots/twitch.png" width=250 />
+
 ## Overview
 
 ---
